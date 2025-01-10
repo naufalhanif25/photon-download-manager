@@ -14,7 +14,9 @@
     📝 Description
     <h3>
         <b>What's PDM? 🤷🏻</b>
-        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Photon Download Manager (PDM) is an open source software that can be used to manage download tasks. PDM will make the file downloading process more effective and efficient, thereby saving time and resources.</p>
+        <h5>
+            <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Photon Download Manager (PDM) is an open source software that can be used to manage download tasks. PDM will make the file downloading process more effective and efficient, thereby saving time and resources.</p>
+        </h5>
     </h3>
 </h2>
 
