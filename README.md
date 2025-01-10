@@ -1,6 +1,6 @@
 <!-- Title -->
 <div align="center">
-    <h1>PDM v1.0.0-beta</h1>
+    <h1>PDM 1.0.0-alpha</h1>
 </div>
 
 <!-- Badges -->

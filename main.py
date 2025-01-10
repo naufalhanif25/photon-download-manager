@@ -61,7 +61,7 @@ if __name__ == "__main__":
     # Configure the main window
     root.geometry(geometry)
     root.configure(bg_color = BASE_COLOR)
-    root.title("Photon Download Manager 1.0.0")
+    root.title("Photon Download Manager 1.0.0-alpha")
     root.iconbitmap(getpath.base("public/icon.ico"))
     root.resizable(False, False)
     
@@ -85,6 +85,8 @@ if __name__ == "__main__":
     def reset_vars():
         global URL, STATUS, SIZE, CURSIZE, SPEED, TIMELEFT
         global ROW, SIZE_CHANGE, TEMP_SIZE
+        
+        root.title("Photon Download Manager 1.0.0-alpha")
         
         URL = "None"
         STATUS = "None"
@@ -219,6 +221,8 @@ if __name__ == "__main__":
                 TIMELEFT = f"{timeleft:.2f} sec"
                 TEMP_SIZE = cursize
                 
+                root.title(f"({percentage:.2f}%) Photon Download Manager 1.0.0-alpha")
+                
                 # Executes the periodic_update function on the second index
                 if sec_index:
                     update_thread = threading.Thread(target = periodic_update)
@@ -234,14 +238,23 @@ if __name__ == "__main__":
                     download_bar.set(percentage / 100)
                     
                 time.sleep(0.1)
-                
+            
+            CURSIZE = f"{(size / (1024 ** 2)):.2f} Mb ({100.00}%)"
+            
             download_bar.set(1)
+            root.title(f"({100.00}%) Photon Download Manager 1.0.0-alpha")
+            
+            update_status()
         
-        root.after(2000, lambda: download_bar.set(0))
+        # Function to reset all processes
+        def reset_all():
+            download_bar.set(0)
+            
+            stop_update()  # Stop the update
+            reset_vars()  # Reset the variables
+            update_status()  # Update the status
         
-        stop_update()  # Stop the update
-        reset_vars()  # Reset the variables
-        update_status()  # Update the status
+        root.after(2000, reset_all)
         
     def update_status():
         # Update the status label with the current status
