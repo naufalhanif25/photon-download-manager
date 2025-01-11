@@ -6,6 +6,7 @@
 <!-- Badges -->
 <div align="center">
     <img src="https://img.shields.io/badge/Python-FFD43B?style=for-the-badge&logo=python&logoColor=blue" /> 
+    <img src="https://img.shields.io/badge/Shell_Script-121011?style=for-the-badge&logo=gnu-bash&logoColor=white" /> 
     <img src="https://img.shields.io/badge/Visual_Studio_Code-0078D4?style=for-the-badge&logo=visual%20studio%20code&logoColor=white" />
 </div>
 
@@ -27,7 +28,7 @@ Photon Download Manager (PDM) is an open source software that can be used to man
 1. Download the ZIP file or clone the repository with `git clone https://github.com/naufalhanif25/photon-download-manager.git`
 2. Extract the ZIP file and move to the directory
 3. Run `libs.bat` to install the required libraries (dev)
-4. Run `pdm.exe` or run the `python main.py` command in the terminal
+4. Run `PDM 1.0.0-alpha.exe` or run the `python main.py` command in the terminal
 
 <!-- Donation -->
 <h2>

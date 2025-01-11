@@ -74,15 +74,23 @@ class URLReq:
         self.PATH = get_unique(self.PATH)
         
         # Download the file in chunks 
-        with requests.get(self.URL, stream = True) as response:
-            if response.status_code == 200:
-                response.raise_for_status()
-                
-                with open(self.PATH, "wb") as file:
-                    for chunk in response.iter_content(chunk_size = 1024):
-                        file.write(chunk)
+        if self.SIZE >= 1024:
+            with requests.get(self.URL, stream = True) as response:
+                if response.status_code == 200:
+                    response.raise_for_status()
+                    
+                    with open(self.PATH, "wb") as file:
+                        for chunk in response.iter_content(chunk_size = 1024):
+                            file.write(chunk)
+                            
+            self.DONE = True
+        else:
+            with requests.get(self.URL) as response:
+                if response.status_code == 200:
+                    with open(self.PATH, "wb") as file:
+                        file.write(response.content)
                         
-                self.DONE = True
+            self.DONE = True
             
         return
     

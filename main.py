@@ -2,13 +2,17 @@
 import customtkinter as ctk
 import tkinter as tk
 from tkinter import ttk
+from tkinter.font import Font
+from screeninfo import get_monitors
 import threading
 import asyncio
+import requests
 import os
 import time
 import getpath
 import urlinfo
 import urlreq
+import popup
 
 # Color constants for the application interface
 BASE_COLOR = "#FAFAFA"
@@ -45,16 +49,19 @@ if __name__ == "__main__":
     geometry = "680x480"
     
     # Function to center the window on the screen
-    def center_win(root, geometry):
+    def center_win(root, geometry):        
         root.update_idletasks()
         
-        scr_width = root.winfo_screenwidth()
-        scr_height = root.winfo_screenheight()
+        width = root.winfo_width()
+        height = root.winfo_height()
+        
+        scr_width = get_monitors()[0].width
+        scr_height = get_monitors()[0].height
         
         size = tuple(int(_) for _ in geometry.split("+")[0].split("x"))
         
-        x = (scr_width // 2) - (size[0] // 2)
-        y = (scr_height // 2) - (size[1] // 2)
+        x = (scr_width // 2) - (width // 2)
+        y = (scr_height // 2) - (height // 2)
         
         root.geometry(f"{size[0]}x{size[1]}+{x}+{y}")
     
@@ -130,31 +137,36 @@ if __name__ == "__main__":
         return status
     
     # Function to truncate the URL if it is too long
-    def cut_url(url):
-        if len(url) >= 74:
-            url = url[:74]
-            url = f"{url}..."
+    def truncate_url(url, max_length = 580, font = Font(family = "Arial", size = 12, weight = "normal")):
+        width = font.measure(url)
         
-        return url
+        if width <= max_length: 
+            return url
+        
+        while width > max_length and len(url) > 0:
+            url = url[:-1]
+            width = font.measure(url + "...")
+        
+        return url + "..."
     
     # Function to handle the download process 
     def download():
         global URL, STATUS, SIZE, CURSIZE, SPEED, TIMELEFT
         global ROW, UPDATE, TEMP_SIZE
-
+        
         url = url_var.get()
 
-        URL = cut_url(url)
+        URL = truncate_url(url)
         STATUS = "Preparing..."
         UPDATE = True
         
-        # Delete the entire contents of the info_table
-        for item in info_table.get_children():
-            info_table.delete(item)
-        
-        update_status()  # Update the status
-        
-        if URL and URL != "Enter URL":
+        if URL and URL != "Enter URL":            
+            # Delete the entire contents of the info_table
+            for item in info_table.get_children():
+                info_table.delete(item)
+            
+            update_status()  # Update the status
+            
             url_entry.configure(text_color = FADED_TEXT)
             url_var.set("Enter URL")
             
@@ -171,8 +183,8 @@ if __name__ == "__main__":
             req = urlreq.URLReq(url, size, ext)
             
             # Starts the file download process
-            thread = threading.Thread(target = req.get_file)
-            thread.start()
+            getfile_thread = threading.Thread(target = req.get_file)
+            getfile_thread.start()
             
             # Function to run internet speed test function
             def speedtest():
@@ -195,11 +207,11 @@ if __name__ == "__main__":
                         def success():
                             update_table("Success")
                         
-                            root.after(1000, periodic_update)
+                            root.after(500, periodic_update)
                             
-                        root.after(1000, success)
+                        root.after(500, success)
                     else:
-                        root.after(1000, periodic_update)
+                        root.after(500, periodic_update)
             
             # Function to stop periodic update
             def stop_update():
@@ -245,6 +257,10 @@ if __name__ == "__main__":
             root.title(f"({100.00}%) Photon Download Manager 1.0.0-alpha")
             
             update_status()
+        else:            
+            popup.open_popup("Please fill in the URL column first\nbefore downloading the file", "warning", count = False)
+            
+            return            
         
         # Function to reset all processes
         def reset_all():
@@ -254,13 +270,16 @@ if __name__ == "__main__":
             reset_vars()  # Reset the variables
             update_status()  # Update the status
         
-        root.after(2000, reset_all)
-        
+        reset_all()
+        popup.open_popup("The file has been downloaded successfully")
+    
+    # Function to update the status of the download process
     def update_status():
         # Update the status label with the current status
         status_label.configure(text = get_status())
         status_label.update_idletasks()  # Refresh the label to reflect the change
-        
+    
+    # Function to update data in the table   
     def update_table(status = "Collecting data..."):
         # Update the status of the last row when the download is success
         if status == "Success":
@@ -271,11 +290,28 @@ if __name__ == "__main__":
             info_table.insert("", ROW - 1, text = f"{ROW}", values = (ROW, CURSIZE, status))
         
         info_table.update_idletasks()  # Refresh the table to reflect the change
-        
+    
+    # Function to start the file download process 
     def start_download():
-        # Start the download process in a separate thread
-        thread = threading.Thread(target = download)
-        thread.start()
+        # Function to check internet connection availability
+        def check_internet_connection(url = "http://www.google.com/"):
+            try:
+                # Send an HTTP request with a timeout of 5 seconds
+                response = requests.get(url, timeout = 5)
+                
+                if response.status_code == 200:
+                    # Start the download process in a separate thread
+                    download_thread = threading.Thread(target = download)
+                    download_thread.start()
+                else:
+                    popup.open_popup("Unable to perform request.\nPlease check your internet connection and try again", "warning", False)
+            except requests.ConnectionError:
+                popup.open_popup("Unable to perform request.\nPlease check your internet connection and try again", "warning", False)
+            except Exception:
+                popup.open_popup("Unable to perform request.\nPlease check your internet connection and try again", "warning", False)
+        
+        # Start checking internet connection
+        check_internet_connection()
     
     # Create a frame for the URL entry and download button
     url_frame = ctk.CTkFrame(main_frame, corner_radius = 4, fg_color = FRAME_COLOR)
