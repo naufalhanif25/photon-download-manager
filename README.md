@@ -19,7 +19,7 @@
     </h3>
 </h2>
 
-<div align="center">
+<div align="center" style = "margin-bottom: 32px">
     <a href="https://github.com/naufalhanif25/photon-download-manager/blob/main/public/icon.png">
     <img src="https://github.com/naufalhanif25/photon-download-manager/blob/main/public/icon.png" style="width: 120px; max-width: 100%; height: 120px; max-height: 100%; margin-bottom: 32px" />
 </div>
