@@ -19,6 +19,11 @@
     </h3>
 </h2>
 
+<div align="left">
+    <a href="https://github.com/naufalhanif25/photon-download-manager/blob/main/public/icon.png">
+    <img src="https://github.com/naufalhanif25/photon-download-manager/blob/main/public/icon.png" style="width: 120px; max-width: 100%; height: 120px; max-height: 100%" />
+</div>
+
 Photon Download Manager (PDM) is an open source software that can be used to manage download tasks. PDM will make the file downloading process more effective and efficient, thereby saving time and resources.
 
 <!-- Setup -->
@@ -30,6 +35,16 @@ Photon Download Manager (PDM) is an open source software that can be used to man
 2. Extract the ZIP file and move to the directory
 3. Run `libs.bat` to install the required libraries (dev)
 4. Run `PDM 1.0.0-alpha.exe` or run the `python main.py` command in the terminal
+
+<!-- Preview -->
+<h3>
+    <b>Preview 📸</b>
+</h3>
+
+<div align="center">
+    <a href="https://github.com/naufalhanif25/photon-download-manager/blob/main/public/preview.png">
+    <img src="https://github.com/naufalhanif25/photon-download-manager/blob/main/public/preview.png" style="width: 340px; max-width: 100%; height: 260px; max-height: 100%" />
+</div>
 
 <!-- Donation -->
 <h2>
