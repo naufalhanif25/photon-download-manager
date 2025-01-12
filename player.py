@@ -15,5 +15,4 @@ def playsound(path):
         sounddevice.wait()
 
     # Create a new thread to play the sound
-    thread = threading.Thread(target = play, args = (path,))
-    thread.start()
+    threading.Thread(target = play, args = (path,)).start()

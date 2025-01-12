@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter.font import Font
 from screeninfo import get_monitors
+import numpy as np
 import threading
 import asyncio
 import requests
@@ -23,6 +24,8 @@ ENTRY_BG = "#E4E4E7"
 BORDER_COLOR = "#A1A1AA"
 BUTTON_BG = "#38BDF8"
 BUTTON_HOVER = "#0EA5E9"
+FUNC_BUTTON_BG = "#F4F4F5"
+FUNC_BUTTON_HOVER = "#E4E4E7"
 BUTTON_TEXT = "#FAFAFA"
 HEADING_BG = "#E4E4E7"
 TABLE_COLOR = "#A1A1AA"
@@ -30,12 +33,12 @@ TEXT_COLOR = "#09090B"
 FADED_TEXT = "#71717A"
 
 # Initialize global variables for status label
-URL = "None"
-STATUS = "None"
-SIZE = "NaN"
-CURSIZE = "NaN"
-SPEED = "NaN"
-TIMELEFT = "NaN"
+URL = None
+STATUS = None
+SIZE = np.nan
+CURSIZE = np.nan
+SPEED = np.nan
+TIMELEFT = np.nan
 
 # Initial values for global variables
 ROW = 0
@@ -43,10 +46,14 @@ UPDATE = True
 SIZE_CHANGE = 0
 TEMP_SIZE = 0
 
+# Initialize global variables to store the state of the buttons
+HIDE = True
+RUN = True
+
 if __name__ == "__main__":
     # Create an instance of CTk window
     root = ctk.CTk()
-    geometry = "680x480"
+    geometry = "680x520"
     
     # Function to center the window on the screen
     def center_win(root, geometry):        
@@ -89,18 +96,20 @@ if __name__ == "__main__":
     url_var.set("Enter URL")
     
     # Function to reset global variables
-    def reset_vars():
+    def reset_vars(url = True):
         global URL, STATUS, SIZE, CURSIZE, SPEED, TIMELEFT
         global ROW, SIZE_CHANGE, TEMP_SIZE
         
         root.title("Photon Download Manager 1.0.0-alpha")
         
-        URL = "None"
-        STATUS = "None"
-        SIZE = "NaN"
-        CURSIZE = "NaN"
-        SPEED = "NaN"
-        TIMELEFT = "NaN"
+        if url:
+            URL = None
+        
+        STATUS = None
+        SIZE = np.nan
+        CURSIZE = np.nan
+        SPEED = np.nan
+        TIMELEFT = np.nan
         
         ROW = 0
         SIZE_CHANGE = 0
@@ -150,28 +159,32 @@ if __name__ == "__main__":
         return url + "..."
     
     # Function to handle the download process 
-    def download():
+    def download(resume):
         global URL, STATUS, SIZE, CURSIZE, SPEED, TIMELEFT
         global ROW, UPDATE, TEMP_SIZE
         
-        url = url_var.get()
+        if not resume:
+            url = url_var.get()
+        else:
+            url = URL
 
         URL = truncate_url(url)
         STATUS = "Preparing..."
         UPDATE = True
         
-        if URL and URL != "Enter URL":            
+        if (URL and URL != "Enter URL") or resume:            
             # Delete the entire contents of the info_table
             for item in info_table.get_children():
                 info_table.delete(item)
             
             update_status()  # Update the status
             
+            pause_button.configure(state = "normal")
             url_entry.configure(text_color = FADED_TEXT)
             url_var.set("Enter URL")
             
             leave_entry(None)
-            
+                      
             info = urlinfo.MimeType(url)
             ext, size = info(True)
             
@@ -183,14 +196,15 @@ if __name__ == "__main__":
             req = urlreq.URLReq(url, size, ext)
             
             # Starts the file download process
-            getfile_thread = threading.Thread(target = req.get_file)
-            getfile_thread.start()
+            req.get_file(resume)
             
             # Function to run internet speed test function
             def speedtest():
                 global SPEED
                 
-                SPEED = f"{(asyncio.run(req.get_speed()) / (1024 * 8)):.2f} Mbps"
+                threading.Thread(target = asyncio.run, args = (req.get_speed(),)).start()
+                
+                SPEED = f"{(req.SPEED / (1024 * 8)):.2f} Mbps"
             
             # Function to perform periodic update
             def periodic_update():
@@ -223,11 +237,10 @@ if __name__ == "__main__":
             sec_index = False
             
             # Updates the status on the label every 0.1 seconds
-            while not req.DONE:
+            while not req.DONE and RUN:
                 cursize, percentage, timeleft = req.get_cursize()
                 
-                speed_thread = threading.Thread(target = speedtest)
-                speed_thread.start()
+                speedtest()  # Run the speed test
                 
                 CURSIZE = f"{cursize / (1024 ** 2):.2f} Mb ({percentage:.2f}%)"
                 TIMELEFT = f"{timeleft:.2f} sec"
@@ -237,8 +250,7 @@ if __name__ == "__main__":
                 
                 # Executes the periodic_update function on the second index
                 if sec_index:
-                    update_thread = threading.Thread(target = periodic_update)
-                    update_thread.start()
+                    threading.Thread(target = periodic_update).start()
                     
                     sec_index = False
                 elif first_index:                    
@@ -251,16 +263,22 @@ if __name__ == "__main__":
                     
                 time.sleep(0.1)
             
-            CURSIZE = f"{(size / (1024 ** 2)):.2f} Mb ({100.00}%)"
-            
-            download_bar.set(1)
-            root.title(f"({100.00}%) Photon Download Manager 1.0.0-alpha")
-            
-            update_status()
+            if RUN:
+                # Execute if RUN is true
+                CURSIZE = f"{(size / (1024 ** 2)):.2f} Mb ({100.00}%)"
+                
+                download_bar.set(1)
+                root.title(f"({100.00}%) Photon Download Manager 1.0.0-alpha")
+                
+                update_status()
+            else:
+                req.DONE = True
+                
+                stop_update()
         else:            
             popup.open_popup("Please fill in the URL column first\nbefore downloading the file", "warning", count = False)
             
-            return            
+            return
         
         # Function to reset all processes
         def reset_all():
@@ -270,8 +288,11 @@ if __name__ == "__main__":
             reset_vars()  # Reset the variables
             update_status()  # Update the status
         
-        reset_all()
-        popup.open_popup("The file has been downloaded successfully")
+        if req.DONE and RUN:
+            # Execute if DONE and RUN is true
+            reset_all()
+            pause_button.configure(state = "disabled")
+            popup.open_popup("The file has been downloaded successfully")
     
     # Function to update the status of the download process
     def update_status():
@@ -292,26 +313,63 @@ if __name__ == "__main__":
         info_table.update_idletasks()  # Refresh the table to reflect the change
     
     # Function to start the file download process 
-    def start_download():
+    def start_download(resume = False):
         # Function to check internet connection availability
-        def check_internet_connection(url = "http://www.google.com/"):
+        def check_internet_connection(resume, url = "http://www.google.com/"):
             try:
                 # Send an HTTP request with a timeout of 5 seconds
                 response = requests.get(url, timeout = 5)
                 
                 if response.status_code == 200:
                     # Start the download process in a separate thread
-                    download_thread = threading.Thread(target = download)
+                    download_thread = threading.Thread(target = download, args = (resume,))
                     download_thread.start()
                 else:
                     popup.open_popup("Unable to perform request.\nPlease check your internet connection and try again", "warning", False)
-            except requests.ConnectionError:
+            except requests.ConnectionError as e:
+                print(e)
                 popup.open_popup("Unable to perform request.\nPlease check your internet connection and try again", "warning", False)
-            except Exception:
+            except Exception as e:
+                print(e)
                 popup.open_popup("Unable to perform request.\nPlease check your internet connection and try again", "warning", False)
         
         # Start checking internet connection
-        check_internet_connection()
+        check_internet_connection(resume)
+    
+    # Function to hide and show the details   
+    def hide_details():    
+        global HIDE
+            
+        if HIDE:
+            info_frame.grid_forget()
+            details_button.configure(text = "Show details")
+            root.geometry(f"680x{main_frame._current_height + 32}")
+            
+            HIDE = False
+        else:
+            info_frame.grid(row = 1, column = 0, padx = 16, pady = 16, sticky = "nsew")
+            details_button.configure(text = "Hide details")
+            root.geometry(geometry)
+            
+            HIDE = True
+    
+    # Function to stop and resume the download process      
+    def pause_start():
+        global RUN, TEMP_URL
+        
+        if RUN:
+            pause_button.configure(text = "Start")
+            
+            RUN = False
+        else:
+            pause_button.configure(text = "Pause")
+            download_bar.set(0)
+            
+            reset_vars(False)
+            update_status()
+            start_download(True)
+            
+            RUN = True
     
     # Create a frame for the URL entry and download button
     url_frame = ctk.CTkFrame(main_frame, corner_radius = 4, fg_color = FRAME_COLOR)
@@ -343,6 +401,26 @@ if __name__ == "__main__":
                                      fg_color = LOADING_BG, progress_color = LOADING_FG, border_width = 1, border_color = BORDER_COLOR)
     download_bar.grid(row = 2, column = 0, padx = 12, pady = (8, 12), sticky = "nsew")
     download_bar.set(0)
+    
+    # Create a frame for the buttons
+    buttons_frame = ctk.CTkFrame(main_frame, corner_radius = 4, fg_color = FRAME_COLOR)
+    buttons_frame.grid(row = 3, column = 0, padx = 16, pady = (0, 16), sticky = "nsew")
+    buttons_frame.grid_columnconfigure(0, weight = 1)
+    buttons_frame.grid_columnconfigure(1, weight = 1)
+    buttons_frame.grid_rowconfigure(0, weight = 1)
+    
+    # Create a button to hide and show the details 
+    details_button = ctk.CTkButton(buttons_frame, text = "Hide details", height = 24, width = 108, corner_radius = 4, fg_color = FUNC_BUTTON_BG, 
+                                   hover_color = FUNC_BUTTON_HOVER, text_color = TEXT_COLOR, font = ("Arial", 12, "normal"), border_width = 1,
+                                   border_color = BORDER_COLOR, command = hide_details)
+    details_button.grid(row = 0, column = 0, padx = 64, pady = 0, sticky = "ne")
+    
+    # Create a button to stop and continue the download process
+    pause_button = ctk.CTkButton(buttons_frame, text = "Pause", height = 24, width = 86, corner_radius = 4, fg_color = FUNC_BUTTON_BG, 
+                                 hover_color = FUNC_BUTTON_HOVER, text_color = TEXT_COLOR, font = ("Arial", 12, "normal"), border_width = 1,
+                                 border_color = BORDER_COLOR, command = pause_start)
+    pause_button.grid(row = 0, column = 1, padx = 64, pady = 0, sticky = "nw")
+    pause_button.configure(state = "disabled")
     
     # Create a frame for the information table
     info_frame = ctk.CTkFrame(root, corner_radius = 4, fg_color = FRAME_COLOR)

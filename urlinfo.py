@@ -244,4 +244,4 @@ class MimeType:
         - type: {self.EXT}
         """
         
-        return string
+        print(string)
