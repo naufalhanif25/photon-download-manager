@@ -19,9 +19,10 @@
     </h3>
 </h2>
 
-<div align="center" style = "padding-bottom: 32px">
+<div align="center">
     <a href="https://github.com/naufalhanif25/photon-download-manager/blob/main/public/icon.png">
-    <img src="https://github.com/naufalhanif25/photon-download-manager/blob/main/public/icon.png" style="width: 120px; max-width: 100%; height: 120px; max-height: 100%; padding-bottom: 32px" />
+    <img src="https://github.com/naufalhanif25/photon-download-manager/blob/main/public/icon.png" style="width: 120px; max-width: 100%; height: 120px; max-height: 100%" />
+    <br>
 </div>
 
 Photon Download Manager (PDM) is an open source software that can be used to manage download tasks. PDM will make the file downloading process more effective and efficient, thereby saving time and resources.
