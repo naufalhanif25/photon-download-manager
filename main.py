@@ -358,7 +358,7 @@ if __name__ == "__main__":
         global RUN, TEMP_URL
         
         if RUN:
-            pause_button.configure(text = "Start")
+            pause_button.configure(text = "Resume")
             
             RUN = False
         else:
